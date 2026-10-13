@@ -201,6 +201,9 @@ class dipole_poisson_solver:
         vac_box.faces.Max(Y).name = "vac_max_y"
 
         # generate geometry
+        BLG.faces.maxh = 0.5 * self.max_h
+        hBn_bottom.maxh = 0.5 * self.max_h
+
         geo_dipole = OCCGeometry([vac_box, hBn_bottom, hBn_top, BLG, pos_sphere, neg_sphere])
         self.mesh_dipole = Mesh(geo_dipole.GenerateMesh(maxh=self.max_h)).Curve(3) # Curve(3) ?
 
