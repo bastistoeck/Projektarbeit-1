@@ -50,6 +50,8 @@ class dipole_poisson_solver:
         self.max_h = None
         self.V_sphere = None
         self.dipole_fes_order = None
+        self.hbn_maxh_factor = None
+        self.blg_maxh_factor = None
 
         # ngsolve objects
         self.mesh_dipole = None
@@ -58,6 +60,7 @@ class dipole_poisson_solver:
         self.gfud = None
         self.gfu_solveonce = None
         self.gfQ = None
+        self.ndofs_potential_fes = None
 
         self.a = None
         self.inv = None
@@ -134,7 +137,7 @@ class dipole_poisson_solver:
         self.separation = None
 
 
-    def build_geometry(self, vac_box_width, height_bottom, height_top, blg_height, sphere_radius, max_h, dipole_fes_order=3):
+    def build_geometry(self, vac_box_width, height_bottom, height_top, blg_height, sphere_radius, max_h, hbn_maxh, blg_maxh, dipole_fes_order=3):
         """
         create ngsolve geometry with dipole as grid function; name boundaries
         """
@@ -146,6 +149,8 @@ class dipole_poisson_solver:
         self.max_h = max_h
         self.V_sphere = 4/3 * np.pi * sphere_radius ** 3
         self.dipole_fes_order = dipole_fes_order
+        self.blg_maxh_factor = blg_maxh
+        self.hbn_maxh_factor = hbn_maxh
 
         # bottom boxes
         box_width = self.vac_box_width
@@ -201,11 +206,14 @@ class dipole_poisson_solver:
         vac_box.faces.Max(Y).name = "vac_max_y"
 
         # generate geometry
-        BLG.faces.maxh = 0.5 * self.max_h
-        hBn_bottom.maxh = 0.5 * self.max_h
+
+        # finer maxh for blg and hbn (object.faces.maxh vs object.maxh?)
+        BLG.maxh = self.blg_maxh_factor * self.max_h
+        hBn_bottom.maxh = self.hbn_maxh_factor * self.max_h
+        hBn_top.maxh = self.hbn_maxh_factor * self.max_h
 
         geo_dipole = OCCGeometry([vac_box, hBn_bottom, hBn_top, BLG, pos_sphere, neg_sphere])
-        self.mesh_dipole = Mesh(geo_dipole.GenerateMesh(maxh=self.max_h)).Curve(3) # Curve(3) ?
+        self.mesh_dipole = Mesh(geo_dipole.GenerateMesh(maxh=self.max_h)).Curve(3)
 
         # dipole grid function
         self.fes_dipole = L2(self.mesh_dipole, order=self.dipole_fes_order)
@@ -243,7 +251,7 @@ class dipole_poisson_solver:
                         }
         # finite element space for potential
         self.fes = H1(self.mesh_dipole, order=gfu_fes_order, dirichlet="bottom|top|top_max_x|top_min_x|top_max_y|top_min_y|bot_max_x|bot_min_x|bot_max_y|bot_min_y|blg_max_x|blg_min_x|blg_max_y|blg_min_y|vac_max_x|vac_min_x|vac_max_y|vac_min_y")
-
+        self.ndofs_potential_fes = self.fes.ndof
         u, v = self.fes.TnT()
         self.a = BilinearForm(self.epsilon_0 * self.epsr * grad(u) * grad(v) * dx).Assemble()
         f = LinearForm(self.gfQ_dipole * v * dx("positive dipole|negative dipole")).Assemble()
