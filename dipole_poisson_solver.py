@@ -123,6 +123,10 @@ class dipole_poisson_solver:
         # induced dipole
         self.induced_charge = None
         self.sep_index = None
+        self.cut_through_charge = None
+        self.cut_percentage = None
+        self.larger_cut_percentage = None
+        self.interp_lambda = None
 
         self.Q_top = None
         self.p_top = None
@@ -273,7 +277,7 @@ class dipole_poisson_solver:
         self.solve_without_BLG_was_run = True
 
 
-    def solve(self, fem_n, epsilon_z, idos_interpolated, pot_min, pot_max, en_min, en_max, use_abs=False ,starting_alpha=0.01):
+    def solve(self, fem_n, epsilon_z, idos_interpolated, pot_min, pot_max, en_min, en_max, cut_percentage=0.1, larger_cut_percentage=0.3, interp_lambda=100, use_abs=False ,starting_alpha=0.01):
         """
         solve non-linear poisson equation on given geometry;
         idos_interpolated is the integrated density of states of BLG
@@ -292,6 +296,10 @@ class dipole_poisson_solver:
         self.pot_max = pot_max
         self.en_min = en_min
         self.en_max = en_max
+
+        self.cut_percentage = cut_percentage
+        self.larger_cut_percentage = larger_cut_percentage
+        self.interp_lambda = interp_lambda
 
         # create chessboard for charges on BLG
         edge_length = self.vac_box_width
@@ -569,14 +577,15 @@ class dipole_poisson_solver:
         self.induced_charge = self.gfQ(self.meshptsMid).reshape((self.fem_n, self.fem_n))
         middle_index = math.floor(self.induced_charge.shape[0]/2)
         y_cut = self.induced_charge[:,middle_index]
+        # save y_cut
+        self.cut_through_charge = y_cut
         
-        # cut boundaries; finite size effects; 10% is removed
-        cut_index = int(0.05 * self.induced_charge.shape[0])
+        # cut boundaries; finite size effects
+        cut_index = int(self.cut_percentage/2 * self.induced_charge.shape[0])
         self.induced_charge = self.induced_charge[cut_index:self.fem_n - cut_index, cut_index:self.fem_n - cut_index]
             
         # cut more here, in order to make it easier to find the inflection point
-        larger_cut_percentage = 0.3
-        larger_cut_index = int(larger_cut_percentage/2 * self.fem_n)
+        larger_cut_index = int(self.larger_cut_percentage/2 * self.fem_n)
         y_cut = y_cut[larger_cut_index:self.fem_n - larger_cut_index]
         
         # x values
@@ -586,9 +595,10 @@ class dipole_poisson_solver:
         x = x[larger_cut_index:self.fem_n - larger_cut_index]
         
         # regression to get smooth derivative
-        spline = interpolate.make_smoothing_spline(x, y_cut, lam=100)
+        spline = interpolate.make_smoothing_spline(x, y_cut, lam=self.interp_lambda)
         x_new = np.linspace(x[0], x[-1], 2000)
-        
+
+        """
         # second derivative
         y_double_prime = spline(x_new, nu=2)
         
@@ -601,7 +611,13 @@ class dipole_poisson_solver:
             sep_index_temp = min_index + np.argmin(abs(y_double_prime[min_index:max_index]))
                 
         sep_index_temp = np.argmin(abs(x - x_new[sep_index_temp]))
-                
+        """
+
+        # first derivative; maximum of absolute value corresponds to the inflection point of y_cut
+        y_prime = spline(x_new, nu=1)
+        sep_index_temp = np.argmax(abs(y_prime))
+        sep_index_temp = np.argmin(abs(x - x_new[sep_index_temp]))
+              
         self.sep_index = larger_cut_index - cut_index + sep_index_temp
         
         # split charge array

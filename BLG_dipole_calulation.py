@@ -1,0 +1,1 @@
+# script to run blg calculation over range of hbn thicknesses and back gate voltages
