@@ -52,7 +52,7 @@ print_bandstructure = False #True # 1 for a bandstructure file
 
 n_bands = 11
 
-energy_deviation = 50 * pow(10,-3) #15 * pow(10,-3) #0.5 * pow(10,-3)
+energy_deviation = 15 * pow(10,-3) #0.5 * pow(10,-3) #50 * pow(10,-3)
 
 emin = -10.0 #-0.2  
 
@@ -388,7 +388,7 @@ bands = np.zeros(reduced_nk*reduced_nk*n_bands, dtype=np.float64)
 
 
 
-
+# using the tight binding hamiltonian from 'tight_binding_hamiltonian_python.py' here
 for j in np.arange(cummulative_kpts_count[rank], cummulative_kpts_count[rank+1]): # jeder ein k punkt; rank: welcher prozessor (id)
 
 	for i in range(reduced_nk):
@@ -495,7 +495,7 @@ if rank == 0:
 
 	print("dos computed in ", timer_dos_end - timer_dos_begin, " seconds")
 
-	np.savetxt('dos.txt', np.array([ energy_intervall,  dos]).T)
+	np.savetxt('dos_MoS2.txt', np.array([ energy_intervall,  dos]).T)
 	
 	
 	print("total number of states is ", np.trapezoid(dos, dx = energy_deviation))

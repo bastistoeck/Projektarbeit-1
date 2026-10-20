@@ -471,7 +471,7 @@ class dipole_poisson_solver:
         potBottom = self.gfu(self.meshptsBot).reshape((self.fem_n, self.fem_n))
         
         average_pot  =  0.5*(potTop+potBottom) #gfu(meshptsMid).reshape((fem_n,fem_n))
-        diff_pot = np.abs(potTop-potBottom)
+        diff_pot = np.abs(potTop-potBottom) 
 
         
         charge = self.get_idos_barycentric(diff_pot, alpha_gen_charge * average_pot)
