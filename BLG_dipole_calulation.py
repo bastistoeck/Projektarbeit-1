@@ -215,25 +215,25 @@ end_barycentricscipy_interpolation_time = time.time()
 
 # scan parameters
 
-number_hBn = 2
-first_hBn = 15 * nm
-last_hBn = 50 * nm
-hBns = np.rint(np.linspace(first_hBn, last_hBn, num=number_hBn))
+number_hBn = 13
+first_hBn = 15
+last_hBn = 50
+hBns = np.rint(np.linspace(first_hBn, last_hBn, num=number_hBn)) * nm # convert to angstrom at the end
 
-number_it = 6
+number_it = 900
 
 if number_it % 3 != 0:
-    print('Error: number_it must be divisible by 3')
+    raise ValueError('number_it must be divisible by 3')
 
 number_points_per_range = int(number_it/3)
-charge_record_factor = 3
+charge_record_factor = 10
 number_charges = int(number_it/charge_record_factor)
 
 if number_it % charge_record_factor != 0:
-    print('Error: number_it must be divisible by charge record factor')
+    raise ValueError('number_it must be divisible by charge record factor')
 
 min_V = -0.1
-min_V_middle = -0.001
+min_V_middle = -0.002
 max_V_middle = -1 * min_V_middle
 max_V = -1 * min_V
 back_gates_left = np.linspace(min_V, min_V_middle, number_points_per_range, endpoint=False)
@@ -265,6 +265,7 @@ fem_n = 300
 epsilon_z = 1e-4
 
 if rank == 0:
+    print('dipole moment: ', dipole_moment_debye)
     print('number of hBn thicknesses: ', number_hBn)
     print('number of back gates per hBn thickness: ', number_it)
     print('hBns [Angstrom]: ')
@@ -272,7 +273,9 @@ if rank == 0:
 
 
 # results files folder
-folder_name = "BLG_calculations_back_gate_range_" + str(max_V)
+folder_name = "BLG_calculations_back_gate_range_" + str(max_V) + "dipole_moment_" + str(dipole_moment_debye)
+if rank == 0:
+    print('results folder name: ' + folder_name)
 
 
 indices = my_split(np.arange(number_it), size)[rank]
@@ -334,6 +337,7 @@ for hBn_height in hBns:
 
     for ind in indices:
         V = back_gates[ind]
+        #print(f'rank {rank}, current back gate V: {V}')
 
         solver.solve_without_BLG(V)
         solver.solve(fem_n, epsilon_z, idos_interpolated, pot_min, pot_max, en_min, en_max, cut_percentage, larger_cut_percentage, lam, use_abs=True, starting_alpha=0.01)
@@ -377,12 +381,8 @@ for hBn_height in hBns:
     hbn_folder_name = "hBn_" + str(hBn_height)
 
     if rank == 0:
-        #newpath = r'C:\Program Files\arbitrary' 
-        #if not os.path.exists(newpath):
-        #    os.makedirs(newpath)
-
         results_folder = Path.cwd() / folder_name / hbn_folder_name
-        results_folder.mkdir(exist_ok=True)
+        results_folder.mkdir(parents=True, exist_ok=True)
 
 
         np.save(results_folder / 'back_gates', back_gates)
@@ -404,3 +404,5 @@ for hBn_height in hBns:
         other_parameters = np.array([vac_box_width, cut_percentage, larger_cut_percentage, height_bottom, charge_record_factor])
         np.save(results_folder / 'box_width-cut_percentage-larger_cut_percentage', other_parameters)
 
+if rank == 0:
+    print('DONE')
