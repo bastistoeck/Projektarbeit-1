@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables / secrets
+.env
+.env.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# IDE
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# NumPy data
+*.npy
+
+# large txt files
+DOS_calculations/bandstructure.txt
+DOS_calculations/dos_MoS2_energy_deviation_05e-3.txt

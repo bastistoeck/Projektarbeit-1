@@ -1,0 +1,72 @@
+Gerne, anbei ist das Skript.  Es ist parallel geschrieben mit mpi und macht einfach numpy calls
+
+
+
+Mein Standrechner hat 4 threads. Wenn ich das bei mir Laufen lasse mit
+
+
+
+
+
+mpiexec -np 4 python dos_numpy.py  ### nur python statt python3 bei mir
+
+
+
+Bekomme ich den output
+
+
+
+emin, emax = -10.0 10.0
+cummulative_kpts_count =  [0, 200, 400, 600, 800]
+cummulative_energies_count =  [0, 100, 200, 300, 401]
+thread 0  has iteration_counter 0
+bands computed in  15.826284646987915  seconds
+dos computed in  5.448215961456299  seconds
+total number of states is  8.000000000039226
+
+
+
+
+
+Du musst dir mpi holen wenn du as nicht zuvor getan hast.
+
+
+
+Als output gibt er dir dos.txt
+
+
+
+Du kannst oben auch die Bandstruktur ausgeben lassen mit print_bandstructure = True und mit gnuplot plotten.
+
+
+
+Durchwegs verwende ich reduzierte Koordinaten. Das heißt jeder k-punkt lautet
+
+
+
+k = p * G_1 + q * G_2
+
+
+
+wobei G_1,2 reziproke Gittervektoren sind. Wir arbeiten aber nicht mit k = (k_x, k_y) sondern mit (p, q) die zwischen 0 und 1 liegen.
+
+
+
+Oben im output steht dass das integral der dos, die total number of states, 8 ist. Das muss so sein, BLG hat 4 orbitale die mit spin doppelt belegt werden.
+
+
+
+
+
+Die Zustandsdichte wird berechnet indem die Delta Funktion durch eine normierte Gauss Funktion approximiert wird, siehe Gleichung 2 in https://de.wikipedia.org/wiki/Zustandsdichte
+
+
+
+
+
+Für BLG muss man noch ein displacement field spezifizieren, da abhängig davon man verschiedene DOS bekommt. Das ist für die anderen 2d Halbleiter nicht not wendig, denke ich. 
+
+
+
+Deren Bandstruktur sollte sich nicht ändern wenn man U ändert.
+
