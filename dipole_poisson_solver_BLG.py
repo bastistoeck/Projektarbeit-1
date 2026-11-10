@@ -140,6 +140,41 @@ class dipole_poisson_solver:
         self.p_total = None
         self.separation = None
 
+    def cleanup(self):
+        # ngsolve objects
+        self.mesh_dipole = None
+        self.gfQ_dipole = None
+        self.gfu = None
+        self.gfud = None
+        self.gfu_solveonce = None
+        self.gfQ = None
+        self.ndofs_potential_fes = None
+        
+        self.a = None
+        self.inv = None
+        
+        self.fes = None
+        self.fes_dipole = None
+        self.fesQ = None
+
+        # solver objects
+        self.global_it = [0]
+        self.history_charges = None
+        self.history_pots_av = None
+        self.history_diff_pot = None
+        self.a_vec = None
+        self.increment = None
+        
+        self.solver_time = None
+        self.total_charge = None
+        self.total_charge_squared = None
+        self.sol = None
+        
+        self.pot_min = None
+        self.pot_max = None
+        self.en_min = None
+        self.en_max = None
+
 
     def build_geometry(self, vac_box_width, height_bottom, height_top, blg_height, sphere_radius, max_h, hbn_maxh, blg_maxh, dipole_fes_order=3):
         """

@@ -93,12 +93,23 @@ from netgen.occ import *
 from netgen.meshing import IdentificationType
 
 from pathlib import Path
+import gc
+import psutil
+import os
+
 
 # my functions
 from helper_functions import *
 from dipole_poisson_solver_BLG import dipole_poisson_solver
 from my_split import *
 
+process = psutil.Process(os.getpid())
+
+def print_memory(rank):
+    process = psutil.Process(os.getpid())
+    memory = process.memory_info().rss / (1024**3)
+
+    print(f"Rank {rank}: Memory usage: {memory:.2f} GB", flush=True)
 
 ### unit-system: Angstrom = 1, eV = 1, e_charge = 1
 
@@ -285,6 +296,8 @@ indices = my_split(np.arange(number_it), size)[rank]
 for hBn_height in hBns:
     if rank == 0:
         print('current hBn thickness: ', hBn_height)
+
+    print_memory(rank)
     # create solver with correct hBn height
     height_bottom = hBn_height
     height_top = hBn_height
@@ -403,6 +416,18 @@ for hBn_height in hBns:
         # safe other parameters
         other_parameters = np.array([vac_box_width, cut_percentage, larger_cut_percentage, height_bottom, charge_record_factor])
         np.save(results_folder / 'box_width-cut_percentage-larger_cut_percentage', other_parameters)
+
+    # clean up to save memory
+    if rank == 0:
+        print('memory before cleanup attempt')
+    print_memory(rank)
+    solver.cleanup()
+    del solver
+    gc.collect()
+    
+    if rank == 0:
+        print('memory after cleanup attempt')
+    print_memory(rank)
 
 if rank == 0:
     print('DONE')
