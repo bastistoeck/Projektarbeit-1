@@ -28,3 +28,4 @@ Thumbs.db
 # large txt files
 DOS_calculations/bandstructure.txt
 DOS_calculations/dos_MoS2_energy_deviation_05e-3.txt
+DOS_calculations/dos_MoS2_energy_deviation_05e-3_gamma_nk_400.txt

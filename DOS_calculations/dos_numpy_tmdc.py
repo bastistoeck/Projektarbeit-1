@@ -16,11 +16,11 @@ from tight_binding_hamiltonian_python import *
 
 ##### k-grid
 
-red_k_intervall = 1.0 #0.06 
+red_k_intervall = 0.06 #1.0 #0.06 
 
-reduced_nk = 4*200 #4 * 200 
+reduced_nk = 4*400 #4 * 200 
 
-K_CENTER_reduced = np.array([0.5, 0.5 ])  #np.array([1.0/3.0, 1.0/3.0 ]) ##
+K_CENTER_reduced = np.array([0.5, 0.5 ])  #np.array([1.0/3.0, 1.0/3.0 ]) ## (0.5, 0.5) corresponds to gamma; (1/3, 1/3) corresponds to k?
 
 K_ORIGIN_reduced = np.array([K_CENTER_reduced[0] - red_k_intervall/2, K_CENTER_reduced[1] - red_k_intervall/2])
 
@@ -500,7 +500,7 @@ if rank == 0:
 	print("number of dos points: ", dos.shape)
 	
 
-	np.savetxt('dos_MoS2_energy_deviation_05e-3.txt', np.array([ energy_intervall,  dos]).T)
+	np.savetxt('dos_MoS2_energy_deviation_05e-3_gamma_nk_400.txt', np.array([ energy_intervall,  dos]).T)
 	
 	
 	print("total number of states is ", np.trapezoid(dos, dx = energy_deviation))
