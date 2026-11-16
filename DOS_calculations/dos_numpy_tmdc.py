@@ -2,6 +2,8 @@ import numpy as np
 
 from scipy.linalg import eigh
 
+import argparse
+
 from mpi4py import MPI
 
 import time
@@ -11,6 +13,16 @@ from numba import jit
 # hamiltonian for tmdcs
 from tight_binding_hamiltonian_python import *
 
+### get reduced k-center as argument during execution
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--k_x", type=float, default=0.0)
+parser.add_argument("--k_y", type=float, default=0.0)
+
+args = parser.parse_args()
+
+k_x_center_reduced = args.k_x
+k_y_center_reduced = args.k_y
 
 ### idos calculations for poisson solver
 
@@ -18,9 +30,9 @@ from tight_binding_hamiltonian_python import *
 
 red_k_intervall = 0.06 #1.0 #0.06 
 
-reduced_nk = 4*400 #4 * 200 
+reduced_nk = 4*200 #4 * 200  or 4 * 400
 
-K_CENTER_reduced = np.array([0.5, 0.5 ])  #np.array([1.0/3.0, 1.0/3.0 ]) ## (0.5, 0.5) corresponds to gamma; (1/3, 1/3) corresponds to k?
+K_CENTER_reduced = np.array([k_x_center_reduced, k_y_center_reduced])  #np.array([1.0/3.0, 1.0/3.0 ]) ## (0.0, 0.0) corresponds to one gamma; (1/3, 1/3) corresponds to one K
 
 K_ORIGIN_reduced = np.array([K_CENTER_reduced[0] - red_k_intervall/2, K_CENTER_reduced[1] - red_k_intervall/2])
 
@@ -52,11 +64,11 @@ print_bandstructure = False #True # 1 for a bandstructure file
 
 n_bands = 11
 
-energy_deviation = 0.5 * pow(10,-3) #0.5 * pow(10,-3) # 50 * pow(10,-3) # 15 * pow(10, -3)
+energy_deviation = 15 * pow(10,-3) #0.5 * pow(10,-3) # 50 * pow(10,-3) # 15 * pow(10, -3)
 
-emin = -10.0 #-0.2  
+emin = -0.5 #-0.2 -10.0
 
-emax = 10.0 #0.2
+emax = 0.5 #0.2  10.0
 
 if rank == 0:
 
@@ -499,8 +511,9 @@ if rank == 0:
 	print("dos computed in ", timer_dos_end - timer_dos_begin, " seconds")
 	print("number of dos points: ", dos.shape)
 	
+	result_filename = 'dos_MoS2_energy_deviation_' + str(energy_deviation) + '_k_center_(' + str(k_x_center_reduced) + ', ' + str(k_y_center_reduced) + ')_nk_' + str(reduced_nk) + '.txt'
 
-	np.savetxt('dos_MoS2_energy_deviation_05e-3_gamma_nk_400.txt', np.array([ energy_intervall,  dos]).T)
+	np.savetxt(result_filename, np.array([ energy_intervall,  dos]).T)
 	
 	
 	print("total number of states is ", np.trapezoid(dos, dx = energy_deviation))
