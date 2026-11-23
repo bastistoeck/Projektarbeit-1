@@ -405,7 +405,7 @@ class dipole_poisson_solver:
     
             #plot figures
             plt.figure(figsize=(11,8))
-            gs=gridspec.GridSpec(1,4, wspace = 0.6) 
+            gs=gridspec.GridSpec(1,6, wspace = 0.6) 
             ax = plt.subplot(gs[0,0])
             img = ax.imshow(charge*pow(self.nm,3), origin="lower")
             plt.colorbar(img, ax=ax,fraction=0.046, pad=0.04)
@@ -417,6 +417,14 @@ class dipole_poisson_solver:
             plt.colorbar(img3, ax=ax3,fraction=0.046, pad=0.04)
             ax4 = plt.subplot(gs[0,3])
             img4 = ax4.imshow(new_average_pot, origin="lower")
+            ax5 = plt.subplot(gs[0,4])
+            img5 = ax5.plot(new_charge[0]*pow(self.nm,3))
+            img6 = ax5.plot(new_charge[-1]*pow(self.nm,3))
+            #img7 = ax5.plot(new_charge[int(self.fem_n/2)]*pow(self.nm,3))
+            ax6 = plt.subplot(gs[0,5])
+            img8 = ax6.plot(new_average_pot[0])
+            img9 = ax6.plot(new_average_pot[-1])
+            #img10 = ax6.plot(new_average_pot[int(self.fem_n/2)])
             plt.colorbar(img4, ax=ax4,fraction=0.046, pad=0.04)
             plt.suptitle("iteration " + str(n_it) + "  "+  r" $\rho_{old}$" + " , " +\
                     r" $\rho_{new}$" + " , " + r" $\Delta\rho$ and" +\
@@ -470,7 +478,7 @@ class dipole_poisson_solver:
         #diff_pot = np.abs(potTop-potBottom) 
 
         
-        charge = self.get_idos_barycentric(alpha_gen_charge * average_pot)
+        charge = alpha_gen_charge*self.get_idos_barycentric(average_pot)
         
         return charge, average_pot
     
