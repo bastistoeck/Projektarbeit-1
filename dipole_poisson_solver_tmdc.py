@@ -139,6 +139,9 @@ class dipole_poisson_solver:
         self.p_total = None
         self.separation = None
 
+        # show plots while minimizing bool
+        self.show_plots = None
+
 
     def build_geometry(self, vac_box_width, height_bottom, height_top, tmdc_height, sphere_radius, max_h, hbn_maxh, tmdc_maxh, dipole_fes_order=3):
         """
@@ -276,7 +279,7 @@ class dipole_poisson_solver:
         self.solve_without_tmdc_was_run = True
 
 
-    def solve(self, fem_n, epsilon_z, epsilon_boundary_xy, idos_interpolated, en_min, en_max, cut_percentage=0.1, larger_cut_percentage=0.3, interp_lambda=100, use_abs=False ,starting_alpha=0.01):
+    def solve(self, fem_n, epsilon_z, epsilon_boundary_xy, idos_interpolated, en_min, en_max, show_plots=False, cut_percentage=0.1, larger_cut_percentage=0.3, interp_lambda=100, use_abs=False ,starting_alpha=0.01):
         """
         solve non-linear poisson equation on given geometry;
         idos_interpolated is the integrated density of states of the tmdc
@@ -291,6 +294,8 @@ class dipole_poisson_solver:
         self.epsilon_boundary_xy = epsilon_boundary_xy # new epsilon to also ignore the xy-boundary for the charge grid 
         self.alpha = starting_alpha
         self.idos_interpolated = idos_interpolated
+
+        self.show_plots = show_plots
 
         
         self.en_min = en_min
@@ -405,8 +410,8 @@ class dipole_poisson_solver:
         n_it = self.global_it[0]
         self.global_it[0] += 1
 
-        show_plots = True
-        if show_plots == True:
+        
+        if self.show_plots == True:
     
             #plot figures
             plt.figure(figsize=(11,8))
