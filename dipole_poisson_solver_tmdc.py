@@ -72,6 +72,7 @@ class dipole_poisson_solver:
         # tmdc parameters
         self.fem_n = None
         self.epsilon_z = None
+        self.epsilon_boundary_xy = None
         self.alpha = None
         self.idos_interpolated = None
 
@@ -275,7 +276,7 @@ class dipole_poisson_solver:
         self.solve_without_tmdc_was_run = True
 
 
-    def solve(self, fem_n, epsilon_z, idos_interpolated, en_min, en_max, cut_percentage=0.1, larger_cut_percentage=0.3, interp_lambda=100, use_abs=False ,starting_alpha=0.01):
+    def solve(self, fem_n, epsilon_z, epsilon_boundary_xy, idos_interpolated, en_min, en_max, cut_percentage=0.1, larger_cut_percentage=0.3, interp_lambda=100, use_abs=False ,starting_alpha=0.01):
         """
         solve non-linear poisson equation on given geometry;
         idos_interpolated is the integrated density of states of the tmdc
@@ -287,6 +288,7 @@ class dipole_poisson_solver:
         
         self.fem_n = fem_n
         self.epsilon_z = epsilon_z
+        self.epsilon_boundary_xy = epsilon_boundary_xy # new epsilon to also ignore the xy-boundary for the charge grid 
         self.alpha = starting_alpha
         self.idos_interpolated = idos_interpolated
 
@@ -305,8 +307,11 @@ class dipole_poisson_solver:
 
         self.increment = edge_length / (self.fem_n - 1)
 
-        xs   = np.linspace(0, edge_length, self.fem_n)
-        ys   = np.linspace(0, edge_length, self.fem_n)
+        #xs   = np.linspace(0, edge_length, self.fem_n) # +/- new epsilon
+        #ys   = np.linspace(0, edge_length, self.fem_n)
+
+        xs   = np.linspace(epsilon_boundary_xy, edge_length - epsilon_boundary_xy, self.fem_n) # +/- new epsilon
+        ys   = np.linspace(epsilon_boundary_xy, edge_length - epsilon_boundary_xy, self.fem_n)
 
         zs_Bot = np.array(hBn_thickness + self.epsilon_z)
 

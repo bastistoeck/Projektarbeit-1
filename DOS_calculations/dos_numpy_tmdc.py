@@ -24,13 +24,18 @@ args = parser.parse_args()
 k_x_center_reduced = args.k_x
 k_y_center_reduced = args.k_y
 
+### result filename
+
+#dos_result_filename = 'dos_MoS2_energy_deviation_' + str(energy_deviation) + '_k_center_(' + str(k_x_center_reduced) + ', ' + str(k_y_center_reduced) + ')_nk_' + str(reduced_nk) + '.txt'
+dos_result_filename = 'dos_MoS2_energy_deviation_05e-3.txt'
+
 ### idos calculations for poisson solver
 
 ##### k-grid
 
-red_k_intervall = 0.06 #1.0 #0.06 
+red_k_intervall = 1.0 #1.0 #0.06 
 
-reduced_nk = 4*200 #4 * 200  or 4 * 400
+reduced_nk = 4*400 #4 * 200  or 4 * 400
 
 K_CENTER_reduced = np.array([k_x_center_reduced, k_y_center_reduced])  #np.array([1.0/3.0, 1.0/3.0 ]) ## (0.0, 0.0) corresponds to one gamma; (1/3, 1/3) corresponds to one K
 
@@ -64,11 +69,11 @@ print_bandstructure = False #True # 1 for a bandstructure file
 
 n_bands = 11
 
-energy_deviation = 15 * pow(10,-3) #0.5 * pow(10,-3) # 50 * pow(10,-3) # 15 * pow(10, -3)
+energy_deviation = 0.5 * pow(10,-3) #0.5 * pow(10,-3) # 50 * pow(10,-3) # 15 * pow(10, -3)
 
-emin = -0.5 #-0.2 -10.0
+emin = -10.0 #-0.2 -10.0
 
-emax = 0.5 #0.2  10.0
+emax = 10.0 #0.2  10.0
 
 if rank == 0:
 
@@ -239,11 +244,11 @@ U_incr = max_U / (max_iteration - 1)
 r1 = np.zeros(2)
 r2 = np.zeros(2)
 
-a0_graphene = 2.461
+a0_tmdc = 3.18
 
 #a0 = a # lattice constant graphene
 
-r1[0] = a0_graphene
+r1[0] = a0_tmdc
 r1[1] = 0
 
 r2[0] = r1[0] * np.cos(2.0 * np.pi / 3)
@@ -276,7 +281,7 @@ kx_incr = red_k_intervall / (reduced_nk - 1.0)
 ky_incr = red_k_intervall / (reduced_nk - 1.0)
 
 
-	
+"""	
 if np.any(kx_reduced > 1.0) or np.any(kx_reduced < 0.0): ### outside of BZ, raise error
 
 	raise ValueError("kx intervall exceeds Brillouin zone")
@@ -284,14 +289,14 @@ if np.any(kx_reduced > 1.0) or np.any(kx_reduced < 0.0): ### outside of BZ, rais
 if np.any(ky_reduced > 1.0) or np.any(ky_reduced < 0.0): ### outside of BZ, raise error
 
 	raise ValueError("ky intervall exceeds Brillouin zone")
-
+"""
 
 ### functions
 
 def f_K(x,y):
     
 
-    f = np.exp(complex(0,1) * y * a0_graphene / np.sqrt(3)) + 2 * np.exp(- complex(0,1) * y * a0_graphene / (2.0 * np.sqrt(3))) * np.cos(x * a0_graphene / 2.0)
+    f = np.exp(complex(0,1) * y * a0_tmdc / np.sqrt(3)) + 2 * np.exp(- complex(0,1) * y * a0_tmdc / (2.0 * np.sqrt(3))) * np.cos(x * a0_tmdc / 2.0)
     
     return f
     
@@ -511,9 +516,7 @@ if rank == 0:
 	print("dos computed in ", timer_dos_end - timer_dos_begin, " seconds")
 	print("number of dos points: ", dos.shape)
 	
-	result_filename = 'dos_MoS2_energy_deviation_' + str(energy_deviation) + '_k_center_(' + str(k_x_center_reduced) + ', ' + str(k_y_center_reduced) + ')_nk_' + str(reduced_nk) + '.txt'
-
-	np.savetxt(result_filename, np.array([ energy_intervall,  dos]).T)
+	np.savetxt(dos_result_filename, np.array([ energy_intervall,  dos]).T)
 	
 	
 	print("total number of states is ", np.trapezoid(dos, dx = energy_deviation))
