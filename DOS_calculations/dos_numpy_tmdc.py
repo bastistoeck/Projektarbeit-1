@@ -27,7 +27,7 @@ k_y_center_reduced = args.k_y
 ### result filename
 
 #dos_result_filename = 'dos_MoS2_energy_deviation_' + str(energy_deviation) + '_k_center_(' + str(k_x_center_reduced) + ', ' + str(k_y_center_reduced) + ')_nk_' + str(reduced_nk) + '.txt'
-dos_result_filename = 'dos_MoS2_energy_deviation_05e-3.txt'
+dos_result_filename = 'dos_MoS2_energy_deviation_05e-4.txt'
 
 ### idos calculations for poisson solver
 
@@ -35,7 +35,7 @@ dos_result_filename = 'dos_MoS2_energy_deviation_05e-3.txt'
 
 red_k_intervall = 1.0 #1.0 #0.06 
 
-reduced_nk = 4*400 #4 * 200  or 4 * 400
+reduced_nk = 4*600 #4 * 200  or 4 * 400
 
 K_CENTER_reduced = np.array([k_x_center_reduced, k_y_center_reduced])  #np.array([1.0/3.0, 1.0/3.0 ]) ## (0.0, 0.0) corresponds to one gamma; (1/3, 1/3) corresponds to one K
 
@@ -69,11 +69,11 @@ print_bandstructure = False #True # 1 for a bandstructure file
 
 n_bands = 11
 
-energy_deviation = 0.5 * pow(10,-3) #0.5 * pow(10,-3) # 50 * pow(10,-3) # 15 * pow(10, -3)
+energy_deviation = 0.5 * pow(10,-4) #0.5 * pow(10,-3) # 50 * pow(10,-3) # 15 * pow(10, -3)
 
-emin = -10.0 #-0.2 -10.0
+emin = -1.5 #-0.2 -10.0
 
-emax = 10.0 #0.2  10.0
+emax = 2.5 #0.2  10.0
 
 if rank == 0:
 

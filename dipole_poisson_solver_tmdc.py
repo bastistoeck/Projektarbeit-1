@@ -24,7 +24,8 @@ from netgen.meshing import IdentificationType
 
 class dipole_poisson_solver:
     
-    def __init__(self, dipole_moment_debye, dipole_d, dipole_pos, inplane_hBn_bulk, outofplane_hBn_bulk, inplane_tmdc, outofplane_tmdc, epsilon_0):
+    def __init__(self, two_d_material, dipole_moment_debye, dipole_d, dipole_pos, inplane_hBn_bulk, outofplane_hBn_bulk, inplane_tmdc, outofplane_tmdc, epsilon_0):
+        self.two_d_material = two_d_material
         # units from debye to our units
         self.dipole_moment = 0.20819427 * dipole_moment_debye
         self.dipole_d = dipole_d
@@ -108,6 +109,8 @@ class dipole_poisson_solver:
         self.history_charges = None
         self.history_pots_av = None
         self.history_diff_pot = None
+        self.rho_diff = []
+        self.q_diff = []
         self.a_vec = None
         self.increment = None
 
@@ -239,7 +242,7 @@ class dipole_poisson_solver:
         self.epsr = self.mesh_dipole.MaterialCF( self.eps_dict )
 
     
-    def solve_without_tmdc (self, back_gate_V, gfu_fes_order=2):
+    def solve_without_tmdc (self, back_gate_V, top_gate=0.0 ,gfu_fes_order=2):
         """
         solve with dipole only; no charges on tmdc
         
@@ -249,7 +252,7 @@ class dipole_poisson_solver:
         """
         # boundary dictionary
         self.back_gate_V = back_gate_V
-        bound_dict = {'bottom' : self.back_gate_V, 'top' : self.bc,
+        bound_dict = {'bottom' : self.back_gate_V, 'top' : top_gate,
                             'top_max_x' : self.bc, 'top_min_x' : self.bc, 'top_max_y' : self.bc, 'top_min_y' : self.bc,
                             'bot_max_x' : self.bc, 'bot_min_x' : self.bc, 'bot_max_y' : self.bc, 'bot_min_y' : self.bc,
                             'blg_max_x' : self.bc, 'blg_min_x' : self.bc, 'blg_max_y' : self.bc, 'blg_min_y' : self.bc,
@@ -275,11 +278,10 @@ class dipole_poisson_solver:
         # save solution:
         #self.gfu_solveonce = GridFunction(self.fes)
         #self.gfu_solveonce.Set(self.gfu)
-        self.global_it[0] = 0
         self.solve_without_tmdc_was_run = True
 
 
-    def solve(self, fem_n, epsilon_z, epsilon_boundary_xy, idos_interpolated, en_min, en_max, show_plots=False, cut_percentage=0.1, larger_cut_percentage=0.3, interp_lambda=100, use_abs=False ,starting_alpha=0.01):
+    def solve(self, fem_n, epsilon_z, epsilon_boundary_xy, idos_interpolated, en_min, en_max, pot_min, pot_max, show_plots=False, cut_percentage=0.1, larger_cut_percentage=0.3, interp_lambda=100, use_abs=False ,starting_alpha=0.01):
         """
         solve non-linear poisson equation on given geometry;
         idos_interpolated is the integrated density of states of the tmdc
@@ -300,6 +302,8 @@ class dipole_poisson_solver:
         
         self.en_min = en_min
         self.en_max = en_max
+        self.pot_min = pot_min
+        self.pot_max = pot_max
 
         self.cut_percentage = cut_percentage
         self.larger_cut_percentage = larger_cut_percentage
@@ -352,6 +356,7 @@ class dipole_poisson_solver:
         self.history_pots_av = [average_pot]
 
         self.a_vec = [self.a]
+        self.global_it[0] = 0
 
         charge = np.ravel(charge)
 
@@ -380,7 +385,7 @@ class dipole_poisson_solver:
 
     # function to minimize
     def residual_of_charge (self, charge, show_plots=False):
-        # a = self.a_vec[0] # why would I need that?
+        # a = self.a_vec[0]
 
         charge = charge.reshape((self.fem_n, self.fem_n))
 
@@ -454,6 +459,8 @@ class dipole_poisson_solver:
         print("iteration: ", n_it)
         print("#", n_it, "  rho_n-1 - rho_n (max): ", np.max(abs(charge - new_charge)))
         print("#", n_it, "  |q_n-1 - q_n| : ", abs(integrated_charge - integrated_new_charge))
+        self.rho_diff.append(np.max(abs(charge - new_charge)))
+        self.q_diff.append(abs(integrated_charge - integrated_new_charge))
         return  (charge - new_charge)
 
 
@@ -468,14 +475,18 @@ class dipole_poisson_solver:
 
         return
 
-    def get_idos_barycentric(self, pot_avg):
+    def get_idos_barycentric(self, pot_avg, pot_diff):
 
 
-        #self.restrict_domain(pot_diff, self.pot_min, self.pot_max)
+        self.restrict_domain(pot_diff, self.pot_min, self.pot_max)
         self.restrict_domain(pot_avg, self.en_min, self.en_max)
 
-        
-        return self.idos_interpolated(pot_avg)
+        if self.two_d_material == 'BLG':
+            return self.idos_interpolated(pot_diff, pot_avg)
+        elif self.two_d_material == 'tmdc':
+            return self.idos_interpolated(pot_avg)
+        else:
+            raise ValueError('two_d_material must be either BLG or tmdc')
 
     def gen_charge(self, alpha_gen_charge=1):
         potTop = np.zeros((self.fem_n, self.fem_n), dtype=np.float64)
@@ -485,10 +496,10 @@ class dipole_poisson_solver:
         potBottom = self.gfu(self.meshptsBot).reshape((self.fem_n, self.fem_n))
         
         average_pot  =  0.5*(potTop+potBottom) #gfu(meshptsMid).reshape((fem_n,fem_n))
-        #diff_pot = np.abs(potTop-potBottom) 
+        diff_pot = np.abs(potTop-potBottom) 
 
         
-        charge = alpha_gen_charge*self.get_idos_barycentric(average_pot)
+        charge = alpha_gen_charge*self.get_idos_barycentric(average_pot, diff_pot)
         
         return charge, average_pot
     
